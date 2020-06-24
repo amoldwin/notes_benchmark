@@ -30,9 +30,15 @@ Finally, we add one script that is not part of the original benchmark, to ensure
 `python -m mimic3benchmark.create_filtered_listfiles`  
 
 We train and test models using the same instructions as the original MIMIC-III Benchmark, but we require the inclusions of new arguments to specify what data to use. For example, the following would train an LSTM model on only structured data.  
+  
  `python -um mimic3models.in_hospital_mortality.main --network mimic3models/keras_models/lstm.py --dim 16 --timestep 1.0 --depth 2 --dropout 0.3 --mode train --batch_size 8 --output_dir mimic3models/in_hospital_mortality --structured`  
+   
  The inclusion of the `--weighted` argument will add class weights to the training to counteract a class imbalance (available only for decompensation and in-hospital mortality)  
+   
  The inclusion of `--condensed` will remove all timesteps in where no notes are present and infer structured data values at those timesteps based on their most recent recorded value.  
+   
  The inclusion of `--doc2vec`, `--words`, and `--cuis` will cause the model to train on a doc2vec document encoding, a bag of words, or a bag of UMLS concepts respectively.  
+   
  Note that `--structured --doc2vec` can be used to train teh LSTM on both structured data and doc2vec note encodings simultaneously, but no other combinations are allowed. This is because the bag of words/concepts required an embedding layer absent in the original baseline LSTM model.  
+   
  
