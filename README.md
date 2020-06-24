@@ -5,7 +5,7 @@ Creating the benchmark will follow the same instructions as the original MIMIC-I
   
 Run the scripts in the following order:  
   
-`python -m mimic3benchmark.scripts.extract_subjects {PATH TO MIMIC-III CSVs} data/root/` (We also make use of two derived data files not present in the MIMIC-III database itself. These will be available at TBA) in `mimic3csv.py` you will need to edit the paths `words_path` and `cuis_path` to point to these files.
+`python -m mimic3benchmark.scripts.extract_subjects {PATH TO MIMIC-III CSVs} data/root/` (We also make use of two derived data files not present in the MIMIC-III database itself. These will be available at TBA)   In the file `mimic3benchmarks/mimic3csv.py` you will need to edit the paths `words_path` and `cuis_path` to point to the derived files.
   
 `python -m mimic3benchmark.scripts.validate_events data/root/`  
   
