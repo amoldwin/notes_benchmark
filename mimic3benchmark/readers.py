@@ -47,6 +47,7 @@ def read_timeseries(self, ts_filename, time_bound=None):
         has_text = ts_df['TEXT'].notnull()
         ts_df = ts_df.fillna(method='ffill')[has_text]
         # ts_df = ts_df.dropna(axis=0,how='all',subset=['TEXT'])
+        # assert False, ts_df
     ts_df = ts_df.replace(np.nan,'')
 
 
@@ -104,7 +105,8 @@ def read_timeseries(self, ts_filename, time_bound=None):
 
 
     if ret ==[]:
-        ret = [[0.0]*len(header)]
+        assert False
+        # ret = [[0.0]*len(header)]
     # assert False, header
     assert header[0] == "Hours"
     # for row in ret:
@@ -153,7 +155,7 @@ class Reader(object):
 
 
 class DecompensationReader(Reader):
-    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None):
+    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None, condensed=False):
         """ Reader for decompensation prediction task.
         :param dataset_dir: Directory where timeseries files are stored.
         :param listfile:    Path to a listfile. If this parameter is left `None` then
@@ -164,6 +166,7 @@ class DecompensationReader(Reader):
         self._data = [(x, float(t), int(y)) for (x, t, y) in self._data]
         self._sources = sources
         self._timesteps = timesteps
+        self._condensed=condensed
 
 
     def read_example(self, index):
@@ -190,7 +193,7 @@ class DecompensationReader(Reader):
         name = self._data[index][0]
         t = self._data[index][1]
         y = self._data[index][2]
-        (X, header) = self._read_timeseries(name, t)
+        (X, header) = read_timeseries(self, name, t)
 
         return {"X": X,
                 "t": t,
@@ -249,7 +252,7 @@ class InHospitalMortalityReader(Reader):
 
 
 class LengthOfStayReader(Reader):
-    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None):
+    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None, condensed=False):
         """ Reader for length of stay prediction task.
 
         :param dataset_dir: Directory where timeseries files are stored.
@@ -261,6 +264,8 @@ class LengthOfStayReader(Reader):
         self._data = [(x, float(t), float(y)) for (x, t, y) in self._data]
         self._sources = sources
         self._timesteps = timesteps
+        self._condensed=condensed
+
 
     def read_example(self, index):
         """ Reads the example with given index.
@@ -286,7 +291,7 @@ class LengthOfStayReader(Reader):
         name = self._data[index][0]
         t = self._data[index][1]
         y = self._data[index][2]
-        (X, header) = self._read_timeseries(name, t)
+        (X, header) = read_timeseries(self,name, t)
 
         return {"X": X,
                 "t": t,
@@ -296,7 +301,7 @@ class LengthOfStayReader(Reader):
 
 
 class PhenotypingReader(Reader):
-    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None):
+    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None, condensed=False):
         """ Reader for phenotype classification task.
 
         :param dataset_dir: Directory where timeseries files are stored.
@@ -308,7 +313,8 @@ class PhenotypingReader(Reader):
         self._data = [(mas[0], float(mas[1]), list(map(int, mas[2:]))) for mas in self._data]
         self._sources = sources
         self._timesteps = timesteps
-    
+        self._condensed=condensed
+   
     def read_example(self, index):
         """ Reads the example with given index.
 
@@ -333,7 +339,7 @@ class PhenotypingReader(Reader):
         name = self._data[index][0]
         t = self._data[index][1]
         y = self._data[index][2]
-        (X, header) = self._read_timeseries(name)
+        (X, header) = read_timeseries(self,name)
 
         return {"X": X,
                 "t": t,
@@ -343,7 +349,7 @@ class PhenotypingReader(Reader):
 
 
 class MultitaskReader(Reader):
-    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None):
+    def __init__(self, dataset_dir, listfile=None, sources=[], timesteps=None, condensed=False):
         """ Reader for multitask learning.
 
         :param dataset_dir: Directory where timeseries files are stored.
@@ -352,7 +358,7 @@ class MultitaskReader(Reader):
         """
         Reader.__init__(self, dataset_dir, listfile)
         self._data = [line.split(',') for line in self._data]
-
+        self._condensed=condensed
         def process_ihm(x):
             return list(map(int, x.split(';')))
 
@@ -406,7 +412,7 @@ class MultitaskReader(Reader):
             raise ValueError("Index must be from 0 (inclusive) to number of lines (exclusive).")
 
         name = self._data[index][0]
-        (X, header) = self._read_timeseries(name)
+        (X, header) = read_timeseries(self,name)
 
         return {"X": X,
                 "t": self._data[index][1],

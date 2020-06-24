@@ -24,7 +24,7 @@ def print_metrics_binary(y_true, predictions, verbose=1):
     rec0 = cf[0][0] / (cf[0][0] + cf[0][1])
     rec1 = cf[1][1] / (cf[1][1] + cf[1][0])
     auroc = metrics.roc_auc_score(y_true, predictions[:, 1])
-
+    mcc = metrics.matthews_corrcoef(y_true, [int(round(x)) for x in predictions[:, 1]], sample_weight=None)
     (precisions, recalls, thresholds) = metrics.precision_recall_curve(y_true, predictions[:, 1])
     auprc = metrics.auc(recalls, precisions)
     minpse = np.max([min(x, y) for (x, y) in zip(precisions, recalls)])
@@ -46,7 +46,8 @@ def print_metrics_binary(y_true, predictions, verbose=1):
             "rec1": rec1,
             "auroc": auroc,
             "auprc": auprc,
-            "minpse": minpse}
+            "minpse": minpse,
+            "mcc": mcc}
 
 
 # for phenotyping
@@ -55,6 +56,16 @@ def print_metrics_multilabel(y_true, predictions, verbose=1):
     y_true = np.array(y_true)
     predictions = np.array(predictions)
 
+
+    mccs = []
+    for i in range(len(y_true[0])):
+        y_true_channel =  [arr[i] for arr in y_true] 
+        predictions_channel = [int(round(arr[i])) for arr in predictions]  
+                          
+        mcc = metrics.matthews_corrcoef(y_true_channel, predictions_channel, sample_weight=None)
+        mccs.append(mcc)
+    ave_mcc =  sum(mccs)/len(mccs)
+
     auc_scores = metrics.roc_auc_score(y_true, predictions, average=None)
     ave_auc_micro = metrics.roc_auc_score(y_true, predictions,
                                           average="micro")
@@ -62,6 +73,17 @@ def print_metrics_multilabel(y_true, predictions, verbose=1):
                                           average="macro")
     ave_auc_weighted = metrics.roc_auc_score(y_true, predictions,
                                              average="weighted")
+    ave_precision_weighted = metrics.average_precision_score(y_true, predictions,
+                                             average="weighted")
+    mccs = []
+    for i in range(len(y_true[0])):
+        y_true_channel =  [arr[i] for arr in y_true] 
+        predictions_channel = [int(round(arr[i])) for arr in predictions]  
+                          
+        mcc = metrics.matthews_corrcoef(y_true_channel, predictions_channel, sample_weight=None)
+        mccs.append(mcc)
+    ave_mcc =  sum(mccs)/len(mccs)
+
 
     if verbose:
         print("ROC AUC scores for labels:", auc_scores)
@@ -72,7 +94,9 @@ def print_metrics_multilabel(y_true, predictions, verbose=1):
     return {"auc_scores": auc_scores,
             "ave_auc_micro": ave_auc_micro,
             "ave_auc_macro": ave_auc_macro,
-            "ave_auc_weighted": ave_auc_weighted}
+            "ave_auc_weighted": ave_auc_weighted,
+            "ave_mcc": ave_mcc,
+            "ave_precision_weighted": ave_precision_weighted }
 
 
 # for length of stay

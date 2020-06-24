@@ -172,7 +172,7 @@ if target_repl:
 if args.mode == 'train':
 
     # Prepare training
-    path = os.path.join(args.output_dir, 'keras_states/' + model.final_name +experiment_name+ '.epoch{epoch}.test{val_loss}.state')
+    path = os.path.join(args.output_dir, 'keras_states/' + model.final_name +experiment_name+ '.state')
 
     metrics_callback = keras_utils.InHospitalMortalityMetrics(train_data=train_raw,
                                                               val_data=val_raw,
@@ -188,7 +188,7 @@ if args.mode == 'train':
     keras_logs = os.path.join(args.output_dir, 'keras_logs')
     if not os.path.exists(keras_logs):
         os.makedirs(keras_logs)
-    csv_logger = CSVLogger(os.path.join(keras_logs, model.final_name + experiment_name+'words_'+ '.csv'),
+    csv_logger = CSVLogger(os.path.join(keras_logs, model.final_name + experiment_name+'.csv'),
                            append=True, separator=';')
     # print(train_raw[0])
     print("==> training")

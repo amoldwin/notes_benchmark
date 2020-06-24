@@ -24,8 +24,45 @@ parser.add_argument('--data', type=str, help='Path to the data of phenotyping ta
                     default=os.path.join(os.path.dirname(__file__), '../../data/phenotyping/'))
 parser.add_argument('--output_dir', type=str, help='Directory relative which all output files are stored',
                     default='.')
+
+parser.add_argument('--doc2vec', action='store_true')
+parser.add_argument('--cuis', action='store_true')
+parser.add_argument('--words', action='store_true')
+parser.add_argument('--structured_data', action='store_true')
+parser.add_argument('--timesteps', type=str, default='both')
+parser.add_argument('--weighted', action='store_true')
+parser.add_argument('--condensed', action='store_true')
+
+
 args = parser.parse_args()
+
 print(args)
+vocab_size=None
+embedding=False
+sources = []
+experiment_name='PHE_'
+if args.doc2vec:
+    sources.append('doc2vec')
+    experiment_name=experiment_name+'doc2vec_'
+if args.cuis:
+    sources.append('cuis')
+    experiment_name=experiment_name+'cuis_'
+    embedding=True
+    vocab_size=51893
+if args.words:
+    sources.append('words')
+    experiment_name=experiment_name+'words_'
+    embedding=True
+    vocab_size=1891434
+if args.structured_data:
+    sources.append('structured_data')
+    experiment_name=experiment_name+'structured_'
+if args.weighted:
+    experiment_name=experiment_name+'weighted_'
+if args.condensed:
+    experiment_name=experiment_name+'condensed_'
+
+
 
 if args.small_part:
     args.save_every = 2**30
@@ -34,15 +71,16 @@ target_repl = (args.target_repl_coef > 0.0 and args.mode == 'train')
 
 # Build readers, discretizers, normalizers
 train_reader = PhenotypingReader(dataset_dir=os.path.join(args.data, 'train'),
-                                 listfile=os.path.join(args.data, 'train_listfile.csv'))
+                                 listfile=os.path.join(args.data, 'train_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
 
 val_reader = PhenotypingReader(dataset_dir=os.path.join(args.data, 'train'),
-                               listfile=os.path.join(args.data, 'val_listfile.csv'))
+                               listfile=os.path.join(args.data, 'val_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
+reader_header = train_reader.read_example(0)['header']
 
 discretizer = Discretizer(timestep=float(args.timestep),
                           store_masks=True,
                           impute_strategy='previous',
-                          start_time='zero')
+                          start_time='zero', header = reader_header, sources = sources)
 
 discretizer_header = discretizer.transform(train_reader.read_example(0)["X"])[1].split(',')
 cont_channels = [i for (i, x) in enumerate(discretizer_header) if x.find("->") == -1]
@@ -50,7 +88,7 @@ cont_channels = [i for (i, x) in enumerate(discretizer_header) if x.find("->") =
 normalizer = Normalizer(fields=cont_channels)  # choose here which columns to standardize
 normalizer_state = args.normalizer_state
 if normalizer_state is None:
-    normalizer_state = 'ph_ts{}.input_str:previous.start_time:zero.normalizer'.format(args.timestep)
+    normalizer_state = 'ph_ts{}.input_str_previous.start_time_zero.normalizer'.format(args.timestep)
     normalizer_state = os.path.join(os.path.dirname(__file__), normalizer_state)
 normalizer.load_params(normalizer_state)
 
@@ -111,7 +149,7 @@ val_data_gen = utils.BatchGen(val_reader, discretizer,
 
 if args.mode == 'train':
     # Prepare training
-    path = os.path.join(args.output_dir, 'keras_states/' + model.final_name + '.epoch{epoch}.test{val_loss}.state')
+    path = os.path.join(args.output_dir, 'keras_states/' + model.final_name +experiment_name+ '.state')
 
     metrics_callback = keras_utils.PhenotypingMetrics(train_data_gen=train_data_gen,
                                                       val_data_gen=val_data_gen,
@@ -121,12 +159,12 @@ if args.mode == 'train':
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    saver = ModelCheckpoint(path, verbose=1, period=args.save_every)
+    saver = ModelCheckpoint(path, verbose=1, save_best_only=True, monitor='val_ave_mcc', mode='max')
 
     keras_logs = os.path.join(args.output_dir, 'keras_logs')
     if not os.path.exists(keras_logs):
         os.makedirs(keras_logs)
-    csv_logger = CSVLogger(os.path.join(keras_logs, model.final_name + '.csv'),
+    csv_logger = CSVLogger(os.path.join(keras_logs, model.final_name +experiment_name+ '.csv'),
                            append=True, separator=';')
 
     print("==> training")
@@ -148,7 +186,7 @@ elif args.mode == 'test':
     del val_data_gen
 
     test_reader = PhenotypingReader(dataset_dir=os.path.join(args.data, 'test'),
-                                    listfile=os.path.join(args.data, 'test_listfile.csv'))
+                                    listfile=os.path.join(args.data, 'test_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
 
     test_data_gen = utils.BatchGen(test_reader, discretizer,
                                    normalizer, args.batch_size,
@@ -174,7 +212,7 @@ elif args.mode == 'test':
         ts += list(cur_ts)
 
     metrics.print_metrics_multilabel(labels, predictions)
-    path = os.path.join(args.output_dir, "test_predictions", os.path.basename(args.load_state)) + ".csv"
+    path = os.path.join(args.output_dir, "test_predictions", os.path.basename(args.load_state)) +experiment_name+ ".csv"
     utils.save_results(names, ts, predictions, labels, path)
 
 else:
