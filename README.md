@@ -37,7 +37,7 @@ We train and test models using the same instructions as the original MIMIC-III B
    
  The inclusion of the `--weighted` argument will add class weights to the training to counteract a class imbalance (available only for decompensation and in-hospital mortality)  
    
- The inclusion of `--condensed` will remove all timesteps in where no notes are present and infer structured data values at those timesteps based on their most recent recorded value.  
+ The inclusion of `--condensed` will remove all timesteps where no notes are present and infer structured data values at those timesteps based on their most recent recorded value.  
    
  The inclusion of `--doc2vec`, `--words`, and `--cuis` will cause the model to train on a doc2vec document encoding, a bag of words, or a bag of UMLS concepts respectively.  
    
