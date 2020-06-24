@@ -41,6 +41,6 @@ We train and test models using the same instructions as the original MIMIC-III B
    
  The inclusion of `--doc2vec`, `--words`, and `--cuis` will cause the model to train on a doc2vec document encoding, a bag of words, or a bag of UMLS concepts respectively.  
    
- Note that `--structured --doc2vec` can be used to train teh LSTM on both structured data and doc2vec note encodings simultaneously, but no other combinations are allowed. This is because the bag of words/concepts required an embedding layer absent in the original baseline LSTM model.  
+ Note that `--structured --doc2vec` can be used to train the LSTM on both structured data and doc2vec note encodings simultaneously, but no other combinations are allowed. This is because the bag of words/concepts required an embedding layer absent in the original baseline LSTM model.  
    
  
