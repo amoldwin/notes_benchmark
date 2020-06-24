@@ -1,7 +1,7 @@
 # notes_benchmark
 MIMIC-III Benchmarks experiments incorporating clinical notes  
   
-Creating the benchmark will follow the same instructions as the original MIMIC-III Benchmark, with one or two devitions.  
+Creating the benchmark will follow the same instructions as the original MIMIC-III Benchmark, with one or two deviations.  
   
 Run the scripts in the following order:  
   
