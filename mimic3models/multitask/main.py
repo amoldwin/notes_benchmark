@@ -82,6 +82,7 @@ train_reader = MultitaskReader(dataset_dir=os.path.join(args.data, 'train'),
 val_reader = MultitaskReader(dataset_dir=os.path.join(args.data, 'train'),
                              listfile=os.path.join(args.data, 'val_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
 reader_header = train_reader.read_example(0)['header']
+n_bins = len(train_reader.read_example(0))
 
 discretizer = Discretizer(timestep=args.timestep,
                           store_masks=True,
@@ -102,6 +103,12 @@ args_dict = dict(args._get_kwargs())
 args_dict['header'] = discretizer_header
 args_dict['ihm_pos'] = int(48.0 / args.timestep - 1e-6)
 args_dict['target_repl'] = target_repl
+args_dict['input_dim']= len(discretizer_header)
+args_dict['embedding'] = embedding
+args_dict['vocab_size'] = vocab_size
+args_dict['embed_dim'] = 16
+args_dict['n_bins'] = n_bins
+args_dict['seq_length'] = 120
 
 # Build the model
 print("==> using model {}".format(args.network))

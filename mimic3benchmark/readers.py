@@ -97,7 +97,7 @@ def read_timeseries(self, ts_filename, time_bound=None):
     
     # assert False, new_df
     if not time_bound==None:
-        time_filter = new_df['Hours'].apply(lambda x: x<=(time_bound+1e-6))
+        time_filter = new_df['Hours'].apply(lambda x: float(x)<=float(time_bound+1e-6))
         new_df=new_df[time_filter]
     header = new_df.columns.to_list()
     # assert False, header

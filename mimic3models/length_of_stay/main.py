@@ -85,6 +85,7 @@ else:
     val_reader = LengthOfStayReader(dataset_dir=os.path.join(args.data, 'train'),
                                     listfile=os.path.join(args.data, 'val_listfile.csv'))
 reader_header = train_reader.read_example(0)['header']
+n_bins = len(train_reader.read_example(0))
 
 discretizer = Discretizer(timestep=args.timestep,
                           store_masks=True,
@@ -108,6 +109,12 @@ args_dict = dict(args._get_kwargs())
 args_dict['header'] = discretizer_header
 args_dict['task'] = 'los'
 args_dict['num_classes'] = (1 if args.partition == 'none' else 10)
+args_dict['input_dim']= len(discretizer_header)
+args_dict['embedding'] = embedding
+args_dict['vocab_size'] = vocab_size
+args_dict['embed_dim'] = 16
+args_dict['n_bins'] = n_bins
+args_dict['seq_length'] = 120
 
 
 # Build the model
