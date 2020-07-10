@@ -41,31 +41,32 @@ def read_timeseries(self, ts_filename, time_bound=None):
     # print('filename', ts_filename)
     with open(os.path.join(self._dataset_dir, ts_filename), "r") as tsfile:
         ts_df = pd.read_csv(tsfile, dtype='str').fillna('') 
-
+    
     ts_df = ts_df.replace('',np.nan)
+    not_in_structured = ['Hours', 'WORDS', 'CUIS', 'DOC2VEC','TEXT']
+    in_structured = [col for col in ts_df.columns if col not in not_in_structured]
+    
     if self._condensed:
         has_text = ts_df['TEXT'].notnull()
-        ts_df = ts_df.fillna(method='ffill')[has_text]
+        ts_df[in_structured] = ts_df[in_structured].fillna(method='ffill')
+        ts_df[in_structured]  = ts_df[in_structured].fillna(method='bfill')[has_text]
+
         # ts_df = ts_df.dropna(axis=0,how='all',subset=['TEXT'])
-        # assert False, ts_df
     ts_df = ts_df.replace(np.nan,'')
 
-
-
-
+    
     included_columns = ['Hours']
     if 'structured_data' in self._sources:
         not_in_structured = ['Hours', 'WORDS', 'CUIS', 'DOC2VEC','TEXT']
         in_structured = [col for col in ts_df.columns if col not in not_in_structured]
         included_columns = included_columns + in_structured
         ts_df['Glascow coma scale total'] =ts_df['Glascow coma scale total'].apply(lambda x: str(int(float(x))) if not x=='' else '' ) 
-        ts_df['Glucose'] =ts_df['Glucose'].apply(lambda x: '' if not x.isnumeric() else x ) 
+        ts_df['Glucose'] =ts_df['Glucose'].apply(lambda x: str(int(float(x))) if not x=='' else '' )#.apply(lambda x: '' if not x.isnumeric() else x ) 
 
     if 'doc2vec' in self._sources:
         included_columns = included_columns + ['DOC2VEC']
     if 'words' in self._sources:
         included_columns = included_columns + ['WORDS']
-        # assert False, ts_df['WORDS']
 
         ts_df['WORDS'] = ts_df['WORDS'].astype(str).apply(lambda x: encode_words(x))
     if 'cuis' in self._sources:
@@ -76,6 +77,7 @@ def read_timeseries(self, ts_filename, time_bound=None):
     # header = tsfile.readline().strip().split(',')
 
     new_df = ts_df[included_columns]
+
     if 'DOC2VEC' in included_columns:
         for i in range(0,DOC2VEC_DIM):
             new_df['DOC2VEC'] = new_df['DOC2VEC'].apply(lambda x: [float(y) for y in str(x).replace('[','').replace(']','').split(',')] if not (x=='') else '')
@@ -92,22 +94,26 @@ def read_timeseries(self, ts_filename, time_bound=None):
             new_df['cuis->'+str(i)] = new_df['CUIS'].apply(lambda x: x[i] if not x=='' else np.nan)
         new_df = new_df[[col for col in new_df.columns if not col=='CUIS']]
     
+
+    new_df = new_df.replace('',np.nan)
     new_df = new_df.dropna(axis=0,how='all',subset=[col for col in new_df.columns if not col=='Hours'])
+    # new_df.to_csv('test_reader.csv')
     
-    
-    # assert False, new_df
     if not time_bound==None:
         time_filter = new_df['Hours'].apply(lambda x: float(x)<=float(time_bound+1e-6))
         new_df=new_df[time_filter]
     header = new_df.columns.to_list()
-    # assert False, header
+    
+
+    new_df = new_df.replace(np.nan,'')
+    
     ret = [np.array(row) for row in new_df.values.tolist()]
 
-
     if ret ==[]:
-        assert False
+        # ret = [['']*len(included_columns)]
+        assert False, (ts_filename,new_df)
         # ret = [[0.0]*len(header)]
-    # assert False, header
+        print(ts_filename, ' had no  events')
     assert header[0] == "Hours"
     # for row in ret:
     #     if 'NEG' in row:
