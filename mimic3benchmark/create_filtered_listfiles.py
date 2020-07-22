@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import numpy as np
 
 def is_kept(ts_filename,t):
     ts = pd.read_csv(ts_filename)
@@ -9,12 +10,11 @@ def is_kept(ts_filename,t):
     cuis_empty = ts.CUIS.isnull().all()
     words_empty = ts.WORDS.isnull().all()
     d2v_empty = ts.DOC2VEC.isnull().all()
-    non_structured = ['CUIS','WORDS','DOC2VEC']
-    
-    structured_empty = False
+    non_structured = ['CUIS','WORDS','DOC2VEC','TEXT','Hours']
+    ts=ts.replace('',np.nan)
+    structured_empty = True
     for col in [col for col in ts.columns if not col in non_structured]:
         structured_empty = structured_empty and ts[col].isnull().all()
-
     keep = not (cuis_empty or words_empty or d2v_empty or structured_empty)
     return keep
 

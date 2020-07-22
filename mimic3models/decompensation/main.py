@@ -81,6 +81,10 @@ else:
                                         listfile=os.path.join(args.data, 'train_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
     val_reader = DecompensationReader(dataset_dir=os.path.join(args.data, 'train'),
                                       listfile=os.path.join(args.data, 'val_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
+
+train_reader = DecompensationReader(dataset_dir=os.path.join(args.data, 'train'),
+                                        listfile=os.path.join(args.data, 'train_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
+    
 reader_header = train_reader.read_example(0)['header']
 n_bins = len(train_reader.read_example(0))
 
@@ -141,9 +145,13 @@ model.summary()
 
 # Load model weights
 n_trained_chunks = 0
+state_to_test = args.load_state
 if args.load_state != "":
     model.load_weights(args.load_state)
     n_trained_chunks = int(re.match(".*chunk([0-9]+).*", args.load_state).group(1))
+elif args.mode == 'test':
+    state_to_test = os.path.join(args.output_dir, 'keras_states/' + model.final_name +experiment_name+ '.state')
+    model.load_weights(state_to_test)
 
 # Load data and prepare generators
 if args.deep_supervision:
@@ -214,7 +222,7 @@ elif args.mode == 'test':
         del train_data_loader
         del val_data_loader
         test_data_loader = common_utils.DeepSupervisionDataLoader(dataset_dir=os.path.join(args.data, 'test'),
-                                                                  listfile=os.path.join(args.data, 'test_listfile.csv'),
+                                                                  listfile=os.path.join(args.data, 'test_listfile.csv',sources=sources, timesteps=args.timesteps, condensed=args.condensed),
                                                                   small_part=args.small_part)
         test_data_gen = utils.BatchGenDeepSupervision(test_data_loader, discretizer,
                                                       normalizer, args.batch_size,
@@ -261,7 +269,7 @@ elif args.mode == 'test':
             ts += list(cur_ts)
 
     metrics.print_metrics_binary(labels, predictions)
-    path = os.path.join(args.output_dir, 'test_predictions', os.path.basename(args.load_state)) +experiment_name+ '.csv'
+    path = os.path.join(args.output_dir, 'test_predictions', os.path.basename(state_to_test)) +experiment_name+ '.csv'
     utils.save_results(names, ts, predictions, labels, path)
 
 else:

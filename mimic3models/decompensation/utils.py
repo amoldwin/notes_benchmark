@@ -33,7 +33,7 @@ class BatchGen(object):
             self.n_examples = steps * batch_size
             self.steps = steps
 
-        self.chunk_size = min(1024, self.steps) * batch_size
+        self.chunk_size = min(256, self.steps) * batch_size
         self.lock = threading.Lock()
         self.generator = self._generator()
 

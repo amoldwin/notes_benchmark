@@ -39,14 +39,15 @@ class Network(Model):
 
         # Input layers and masking
         X = Input(shape=(None, input_dim), name='X')
-        # X=cast(X, 'int32')
+        shape = X.get_shape().as_list()
+        self.n_bins=shape[1]
         inputs = [X]
         if self.embedding:
             X = Embedding(self.vocab_size,self.embed_dim, input_shape=(self.n_bins, self.seq_length))(X)#, embeddings_regularizer=keras.regularizers.l1(0.5))(X)
         mX = Masking()(X)
         if self.embedding:
             mX = Lambda(lambda x: x, output_shape=lambda s:s)(mX)
-            mX = Reshape((2*int(self.n_bins), int(self.embed_dim*self.seq_length)))(mX)
+            mX = Reshape((-1, int(self.embed_dim*self.seq_length)))(mX)
         if deep_supervision:
             M = Input(shape=(None,), name='M')
             inputs.append(M)

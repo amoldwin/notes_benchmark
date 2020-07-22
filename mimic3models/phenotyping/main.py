@@ -76,14 +76,20 @@ train_reader = PhenotypingReader(dataset_dir=os.path.join(args.data, 'train'),
 val_reader = PhenotypingReader(dataset_dir=os.path.join(args.data, 'train'),
                                listfile=os.path.join(args.data, 'val_listfile.csv'), sources=sources, timesteps=args.timesteps, condensed=args.condensed)
 reader_header = train_reader.read_example(0)['header']
-n_bins = len(train_reader.read_example(0))
+
 discretizer = Discretizer(timestep=float(args.timestep),
                           store_masks=True,
                           impute_strategy='previous',
                           start_time='zero', header = reader_header, sources = sources)
 
+
 discretizer_header = discretizer.transform(train_reader.read_example(0)["X"])[1].split(',')
 cont_channels = [i for (i, x) in enumerate(discretizer_header) if x.find("->") == -1]
+
+
+
+
+
 
 normalizer = Normalizer(fields=cont_channels)  # choose here which columns to standardize
 normalizer_state = args.normalizer_state
@@ -91,6 +97,20 @@ if normalizer_state is None:
     normalizer_state = 'ph_ts{}.input_str_previous.start_time_zero.normalizer'.format(args.timestep)
     normalizer_state = os.path.join(os.path.dirname(__file__), normalizer_state)
 normalizer.load_params(normalizer_state)
+
+train_data_gen = utils.BatchGen(train_reader, discretizer,
+                                normalizer, args.batch_size,
+                                args.small_part, target_repl, shuffle=True)
+
+n_bins = len(train_data_gen.next()[0][0])
+print('n_bins', n_bins)
+print('n_bins', len(train_data_gen.next()[0][0]))
+print('n_bins', len(train_data_gen.next()[0][0]))
+print('n_bins', len(train_data_gen.next()[0][0]))
+
+
+
+
 
 args_dict = dict(args._get_kwargs())
 args_dict['header'] = discretizer_header
@@ -140,10 +160,13 @@ model.summary()
 
 # Load model weights
 n_trained_chunks = 0
+state_to_test = args.load_state
 if args.load_state != "":
     model.load_weights(args.load_state)
     n_trained_chunks = int(re.match(".*epoch([0-9]+).*", args.load_state).group(1))
-
+elif args.mode == 'test':
+    state_to_test = os.path.join(args.output_dir, 'keras_states/' + model.final_name +experiment_name+ '.state')
+    model.load_weights(state_to_test)
 
 # Build data generators
 train_data_gen = utils.BatchGen(train_reader, discretizer,
@@ -152,6 +175,7 @@ train_data_gen = utils.BatchGen(train_reader, discretizer,
 val_data_gen = utils.BatchGen(val_reader, discretizer,
                               normalizer, args.batch_size,
                               args.small_part, target_repl, shuffle=False)
+
 
 if args.mode == 'train':
     # Prepare training
@@ -218,7 +242,7 @@ elif args.mode == 'test':
         ts += list(cur_ts)
 
     metrics.print_metrics_multilabel(labels, predictions)
-    path = os.path.join(args.output_dir, "test_predictions", os.path.basename(args.load_state)) +experiment_name+ ".csv"
+    path = os.path.join(args.output_dir, "test_predictions", os.path.basename(state_to_test)) +experiment_name+ ".csv"
     utils.save_results(names, ts, predictions, labels, path)
 
 else:
