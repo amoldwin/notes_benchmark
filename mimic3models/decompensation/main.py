@@ -222,8 +222,8 @@ elif args.mode == 'test':
         del train_data_loader
         del val_data_loader
         test_data_loader = common_utils.DeepSupervisionDataLoader(dataset_dir=os.path.join(args.data, 'test'),
-                                                                  listfile=os.path.join(args.data, 'test_listfile.csv',sources=sources, timesteps=args.timesteps, condensed=args.condensed),
-                                                                  small_part=args.small_part)
+                                                                  listfile=os.path.join(args.data, 'test_listfile.csv'),
+                                                                  small_part=args.small_part, sources=sources, timesteps=args.timesteps, condensed=args.condensed)
         test_data_gen = utils.BatchGenDeepSupervision(test_data_loader, discretizer,
                                                       normalizer, args.batch_size,
                                                       shuffle=False, return_names=True)
