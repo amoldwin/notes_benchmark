@@ -48,6 +48,9 @@ class Network(Model):
         if self.embedding and deep_supervision:
             mX = Lambda(lambda x: x, output_shape=lambda s:s)(mX)
             mX = Reshape((-1, int(2*self.embed_dim*self.seq_length)))(mX)
+        if self.embedding and target_repl:
+            mX = Lambda(lambda x: x, output_shape=lambda s:s)(mX)
+            mX = Reshape((-1, int(2*self.embed_dim*self.seq_length)))(mX)
         elif self.embedding and not deep_supervision:
             mX = Lambda(lambda x: x, output_shape=lambda s:s)(mX)
             mX = Reshape((-1, int(self.embed_dim*self.seq_length)))(mX)

@@ -34,6 +34,13 @@ def main():
                         default=os.path.join(os.path.dirname(__file__), '../../../data/phenotyping/'))
     parser.add_argument('--output_dir', type=str, help='Directory relative which all output files are stored',
                         default='.')
+                        parser.add_argument('--doc2vec', action='store_true')
+    parser.add_argument('--cuis', action='store_true')
+    parser.add_argument('--words', action='store_true')
+    parser.add_argument('--structured_data', action='store_true')
+    parser.add_argument('--timesteps', type=str, default='both')
+    parser.add_argument('--weighted', action='store_true')
+    parser.add_argument('--condensed', action='store_true')
     args = parser.parse_args()
     print(args)
 
